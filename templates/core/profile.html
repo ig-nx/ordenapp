@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Perfil | OrdenApp{% endblock %}
+
+{% block content %}
+<section class="panel mb-3">
+    <p class="eyebrow mb-1">Perfil</p>
+    <h1 class="h4 mb-1">{{ request.user.username }}</h1>
+    <p class="text-secondary mb-0">Resumen personal de productividad.</p>
+</section>
+
+<section class="panel mb-3">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <div>
+            <div class="stat-card">
+                <p>Tareas totales</p>
+                <strong>{{ summary.total }}</strong>
+            </div>
+        </div>
+        <div>
+            <div class="stat-card">
+                <p>Tareas completadas</p>
+                <strong>{{ summary.completed }}</strong>
+            </div>
+        </div>
+        <div>
+            <div class="stat-card">
+                <p>Pomodoros hoy</p>
+                <strong>{{ summary.pomodoros_today }}</strong>
+            </div>
+        </div>
+        <div>
+            <div class="stat-card">
+                <p>Pomodoros totales</p>
+                <strong>{{ total_pomodoros }}</strong>
+            </div>
+        </div>
+    </div>
+    <div class="progress summary-progress mt-3" role="progressbar" aria-label="Progreso total" aria-valuemin="0" aria-valuemax="100">
+        <div class="progress-bar summary-progress-bar" data-percent="{{ summary.progress }}"></div>
+    </div>
+    <p class="small text-secondary mt-2 mb-0">Progreso general: {{ summary.progress }}%</p>
+</section>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+    <div>
+        <section class="panel">
+            <h2 class="h6 mb-3">Pomodoros ultimos 7 dias</h2>
+            <div class="grid gap-2">
+                {% for item in week_data %}
+                    <div class="weekly-row">
+                        <span>{{ item.label }}</span>
+                        <div class="progress weekly-progress">
+                            <div
+                                class="progress-bar weekly-progress-bar"
+                                data-value="{{ item.value }}"
+                                data-max="{{ weekly_max|default:1 }}"
+                            ></div>
+                        </div>
+                        <strong>{{ item.value }}</strong>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+    <div>
+        <section class="panel">
+            <h2 class="h6 mb-3">Ultimas tareas terminadas</h2>
+            {% if recent_completed_tasks %}
+                <div class="grid gap-2">
+                    {% for task in recent_completed_tasks %}
+                        <article class="mini-entry">
+                            <h3 class="h6 mb-1">{{ task.title }}</h3>
+                            <p class="small text-secondary mb-0">
+                                {% if task.estimated_minutes %}
+                                    Tiempo estimado: {{ task.estimated_minutes }} minutos
+                                {% else %}
+                                    Sin tiempo estimado
+                                {% endif %}
+                            </p>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-secondary small mb-0">Aun no hay tareas completadas.</p>
+            {% endif %}
+        </section>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const summaryBar = document.querySelector(".summary-progress-bar");
+    if (summaryBar) {
+        const percent = Number(summaryBar.dataset.percent || 0);
+        summaryBar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+    }
+
+    document.querySelectorAll(".weekly-progress-bar").forEach((bar) => {
+        const value = Number(bar.dataset.value || 0);
+        const max = Number(bar.dataset.max || 1);
+        const percent = max > 0 ? (value / max) * 100 : 0;
+        bar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+    });
+</script>
+{% endblock %}

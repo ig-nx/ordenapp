@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio | OrdenApp{% endblock %}
+
+{% block content %}
+<div
+    id="organizador-app"
+    data-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
+    data-task-create-url="{% url 'core:task_create' %}"
+    data-task-update-url-template="{% url 'core:task_update' 0 %}"
+    data-task-delete-url-template="{% url 'core:task_delete' 0 %}"
+    data-task-status-url-template="{% url 'core:task_change_status' 0 %}"
+    data-pomodoro-complete-url="{% url 'core:pomodoro_complete' %}"
+>
+    {{ initial_tasks|json_script:"initial-tasks-data" }}
+    {{ summary|json_script:"initial-summary-data" }}
+    {{ task_priorities|json_script:"task-priorities-data" }}
+    {{ minute_options|json_script:"minute-options-data" }}
+
+    <div class="dashboard-head mb-3">
+        <h1 class="dashboard-title mb-1">Centro de productividad</h1>
+        <p class="dashboard-subtitle mb-0">Organiza tus tareas y trabaja con sesiones de enfoque.</p>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-3 mb-3 items-stretch">
+        <div class="xl:col-span-7">
+            <section class="panel panel-pomodoro h-full">
+                <div class="pomodoro-header mb-3">
+                    <h2 class="pomodoro-title mb-0">
+                        <svg class="pomodoro-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"></circle>
+                            <path d="M12 7.5V12L15.2 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                        Sesión de enfoque
+                    </h2>
+                </div>
+
+                <div class="pomodoro-center text-center">
+                    <p class="pomodoro-focus-label mb-2">Modo enfoque</p>
+
+                    <div class="timer-value" id="timer-value">15:00</div>
+                    <p class="pomodoro-duration-text mb-3">
+                        Duración de la sesión: <span id="pomodoro-duration-label">15 minutos</span>
+                    </p>
+
+                    <div class="progress timer-progress timer-progress-compact mx-auto mb-3" role="progressbar" aria-label="Progreso pomodoro" aria-valuemin="0" aria-valuemax="100">
+                        <div id="pomodoro-progress" class="progress-bar"></div>
+                    </div>
+
+                    <div class="flex justify-center flex-wrap gap-2 mb-3">
+                        <button class="btn btn-sm btn-timer-primary px-3" type="button" id="pomodoro-start">
+                            <span id="pomodoro-start-icon" aria-hidden="true">></span>
+                            <span id="pomodoro-start-text">Iniciar sesión</span>
+                        </button>
+                        <button class="btn btn-sm btn-timer-secondary px-3" type="button" id="pomodoro-reset">Reiniciar sesión</button>
+                    </div>
+
+                    <div class="pomodoro-duration-picker mx-auto">
+                        <label for="pomodoro-duration" class="small text-secondary mb-1 block">Duración de la sesión</label>
+                        <select id="pomodoro-duration" class="form-select">
+                            {% for minutes in pomodoro_durations %}
+                                <option value="{{ minutes }}" {% if minutes == 15 %}selected{% endif %}>{{ minutes }} minutos</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <label class="sound-toggle mt-2" for="pomodoro-sound-toggle">
+                        <input type="checkbox" id="pomodoro-sound-toggle">
+                        <span>Sonido al terminar</span>
+                    </label>
+                </div>
+            </section>
+        </div>
+
+        <div class="xl:col-span-5">
+            <section class="panel task-create-panel h-full">
+                <div class="mb-3">
+                    <h2 class="h4 mb-1">Nueva tarea</h2>
+                    <p class="text-secondary small mb-0">Crea una tarea clara y accionable.</p>
+                </div>
+
+                <form id="task-create-form" class="grid gap-2">
+                    <div>
+                        <label class="form-label small mb-1" for="{{ task_form.title.id_for_label }}">Nombre de la tarea</label>
+                        {{ task_form.title }}
+                    </div>
+                    <div>
+                        <label class="form-label small mb-1" for="{{ task_form.description.id_for_label }}">Detalles (opcional)</label>
+                        {{ task_form.description }}
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                            <label class="form-label small mb-1" for="{{ task_form.estimated_minutes.id_for_label }}">Tiempo</label>
+                            {{ task_form.estimated_minutes }}
+                        </div>
+                        <div>
+                            <label class="form-label small mb-1" for="{{ task_form.priority.id_for_label }}">Prioridad</label>
+                            {{ task_form.priority }}
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary w-100">Crear tarea</button>
+                </form>
+
+                <div id="task-form-errors" class="form-feedback mt-2 d-none"></div>
+            </section>
+        </div>
+    </div>
+
+    <section class="panel task-list-panel mb-3">
+        <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+            <h2 class="h3 mb-0">Lista de Tareas</h2>
+            <span class="task-counter-pill"><strong id="task-counter-completed">0</strong>/<span id="task-counter-total">0</span> completadas</span>
+        </div>
+
+        <div class="grid gap-2" id="task-simple-list"></div>
+        <p id="task-simple-empty" class="small text-secondary mb-0">No hay tareas todavia.</p>
+    </section>
+
+    <section class="panel summary-panel">
+        <div class="flex justify-between items-center mb-3">
+            <div>
+                <p class="eyebrow mb-1">Resumen</p>
+                <h2 class="h5 mb-0">Avance general</h2>
+            </div>
+        </div>
+
+        <div class="summary-metrics mb-3">
+            <div class="summary-metric">
+                <span class="summary-label">Total</span>
+                <strong id="summary-total">0</strong>
+            </div>
+            <div class="summary-metric">
+                <span class="summary-label">Pendientes</span>
+                <strong id="summary-pending">0</strong>
+            </div>
+            <div class="summary-metric">
+                <span class="summary-label">Completadas</span>
+                <strong id="summary-completed">0</strong>
+            </div>
+            <div class="summary-metric">
+                <span class="summary-label">Progreso</span>
+                <strong id="summary-progress">0%</strong>
+            </div>
+            <div class="summary-metric">
+                <span class="summary-label">Pomodoros Hoy</span>
+                <strong id="summary-pomodoros">0</strong>
+            </div>
+        </div>
+
+        <div class="progress summary-progress" role="progressbar" aria-label="Progreso de tareas" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-bar" id="summary-progress-bar"></div>
+        </div>
+    </section>
+</div>
+
+<div id="pomodoro-finish-toast" class="pomodoro-toast hidden" role="status" aria-live="polite">
+    <div class="pomodoro-toast-icon" aria-hidden="true">&#10003;</div>
+    <div class="pomodoro-toast-copy">
+        <strong>Pomodoro completado</strong>
+        <p id="pomodoro-toast-message">Sesion registrada correctamente.</p>
+    </div>
+    <button type="button" class="icon-action-btn" id="pomodoro-toast-close" aria-label="Cerrar aviso">&times;</button>
+</div>
+
+<div id="taskEditModal" class="modal-layer hidden" aria-hidden="true">
+    <div class="modal-card">
+        <div class="modal-head">
+            <h5 id="taskEditModalLabel">Editar tarea</h5>
+            <button type="button" class="icon-action-btn" data-modal-close aria-label="Cerrar">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M6 6 18 18M18 6 6 18" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path>
+                </svg>
+            </button>
+        </div>
+        <form id="task-edit-form">
+            <div class="modal-body">
+                <input type="hidden" id="edit-task-id" name="task_id">
+                <div class="mb-2">
+                    <label for="edit-title" class="form-label small mb-1">Titulo</label>
+                    <input type="text" class="form-control" id="edit-title" name="title" maxlength="140" required>
+                </div>
+                <div class="mb-2">
+                    <label for="edit-description" class="form-label small mb-1">Descripcion</label>
+                    <textarea class="form-control" id="edit-description" name="description" rows="2"></textarea>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div>
+                        <label for="edit-estimated-minutes" class="form-label small mb-1">Tiempo</label>
+                        <select class="form-select" id="edit-estimated-minutes" name="estimated_minutes">
+                            {% for item in minute_options %}
+                                <option value="{{ item.value }}">{{ item.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="edit-priority" class="form-label small mb-1">Prioridad</label>
+                        <select class="form-select" id="edit-priority" name="priority">
+                            {% for item in task_priorities %}
+                                <option value="{{ item.value }}">{{ item.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div id="task-edit-errors" class="form-feedback mt-2 d-none"></div>
+            </div>
+            <div class="modal-foot">
+                <button type="button" class="btn btn-sm btn-outline-light" data-modal-close>Cancelar</button>
+                <button type="submit" class="btn btn-sm btn-light">Guardar cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

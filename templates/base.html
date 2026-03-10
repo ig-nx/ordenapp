@@ -1,0 +1,69 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}OrdenApp{% endblock %}</title>
+    <script>
+        (function () {
+            const savedTheme = localStorage.getItem("ordenapp-theme");
+            const theme = savedTheme || "light";
+            document.documentElement.setAttribute("data-theme", theme);
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=20260310e">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen flex flex-col">
+    <header class="site-header">
+        <nav class="container mx-auto px-4 py-3">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <a class="brand-mark" href="{% url 'core:home' %}">OrdenApp</a>
+
+                <div class="flex items-center gap-2">
+                    <a class="nav-chip {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'core:home' %}">Inicio</a>
+                    {% if request.user.is_authenticated %}
+                        <a class="nav-chip {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" href="{% url 'core:profile' %}">Perfil</a>
+                        <form method="post" action="{% url 'core:logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-chip">Cerrar sesion</button>
+                        </form>
+                    {% else %}
+                        <a class="nav-chip {% if request.resolver_match.url_name == 'login' %}active{% endif %}" href="{% url 'core:login' %}">Iniciar sesion</a>
+                        <a class="nav-chip nav-chip-cta {% if request.resolver_match.url_name == 'signup' %}active{% endif %}" href="{% url 'core:signup' %}">Registrarse</a>
+                    {% endif %}
+
+                    <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Cambiar tema">
+                        <span id="theme-icon" aria-hidden="true"></span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="flex-1">
+        <div class="container mx-auto px-4 app-shell">
+            {% include "partials/messages.html" %}
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer class="site-footer py-4 mt-8">
+        <div class="container mx-auto px-4 flex flex-col md:flex-row justify-between gap-2">
+            <span>OrdenApp: enfoque, orden y resultados diarios.</span>
+            <span class="md:text-right">Menos ruido, mas avance.</span>
+        </div>
+    </footer>
+
+    <script src="{% static 'js/theme.js' %}" defer></script>
+    {% if request.resolver_match.url_name == "home" %}
+        <script src="{% static 'js/main.js' %}?v=20260310d" defer></script>
+    {% endif %}
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

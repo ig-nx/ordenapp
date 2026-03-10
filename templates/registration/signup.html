@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Registro | OrdenApp{% endblock %}
+
+{% block content %}
+<section class="auth-wrap">
+    <div class="panel auth-panel">
+        <p class="eyebrow mb-1">Registro</p>
+        <h1 class="h4 mb-3">Crear cuenta</h1>
+
+        <form method="post" class="grid gap-2">
+            {% csrf_token %}
+            <div>
+                <label class="form-label small mb-1" for="{{ form.username.id_for_label }}">Usuario</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <div class="small text-danger mt-1">{{ form.username.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+            <div>
+                <label class="form-label small mb-1" for="{{ form.email.id_for_label }}">Correo (opcional)</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <div class="small text-danger mt-1">{{ form.email.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+            <div>
+                <label class="form-label small mb-1" for="{{ form.password1.id_for_label }}">Contrasena</label>
+                {{ form.password1 }}
+                {% if form.password1.errors %}
+                    <div class="small text-danger mt-1">{{ form.password1.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+            <div>
+                <label class="form-label small mb-1" for="{{ form.password2.id_for_label }}">Confirmar contrasena</label>
+                {{ form.password2 }}
+                {% if form.password2.errors %}
+                    <div class="small text-danger mt-1">{{ form.password2.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+            <button type="submit" class="btn btn-light btn-sm mt-2">Crear cuenta</button>
+        </form>
+
+        <p class="small text-secondary mt-3 mb-0">
+            Ya tienes cuenta?
+            <a href="{% url 'core:login' %}" class="link-light">Inicia sesion</a>
+        </p>
+    </div>
+</section>
+{% endblock %}

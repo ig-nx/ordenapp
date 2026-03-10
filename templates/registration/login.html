@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Iniciar sesion | OrdenApp{% endblock %}
+
+{% block content %}
+<section class="auth-wrap">
+    <div class="panel auth-panel">
+        <p class="eyebrow mb-1">Acceso</p>
+        <h1 class="h4 mb-3">Iniciar sesion</h1>
+
+        {% if form.errors %}
+            <div class="alert alert-danger py-2 small">
+                Usuario o contrasena incorrectos.
+            </div>
+        {% endif %}
+
+        <form method="post" class="grid gap-2">
+            {% csrf_token %}
+            {% if next %}
+                <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
+            <div>
+                <label for="id_username" class="form-label small mb-1">Usuario</label>
+                <input type="text" id="id_username" name="username" class="form-control auth-input" required autofocus>
+            </div>
+            <div>
+                <label for="id_password" class="form-label small mb-1">Contrasena</label>
+                <input type="password" id="id_password" name="password" class="form-control auth-input" required>
+            </div>
+            <button type="submit" class="btn btn-light btn-sm mt-2">Entrar</button>
+        </form>
+
+        <p class="small text-secondary mt-3 mb-0">
+            No tienes cuenta?
+            <a href="{% url 'core:signup' %}" class="link-light">Registrate</a>
+        </p>
+    </div>
+</section>
+{% endblock %}

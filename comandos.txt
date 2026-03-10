@@ -1,0 +1,30 @@
+2. Crear entorno virtual (obligatorio profesionalmente)
+python -m venv venv
+
+Esto crea una carpeta llamada venv que aisla las dependencias.
+
+3. Activar el entorno virtual
+
+En Windows (CMD o terminal de VS Code):
+
+venv\Scripts\activate
+
+Si funciona verás algo así:
+
+(venv) C:\ruta\proyecto>
+
+4. Actualizar pip
+python -m pip install --upgrade pip
+5. Instalar Django
+pip install django
+
+Verificar instalación:
+
+django-admin --version
+6. Crear el proyecto Django
+
+Dentro de la carpeta del proyecto ejecuta:
+
+django-admin startproject config .
+
+El punto (.) es importante porque crea el proyecto en la carpeta actual.
